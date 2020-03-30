@@ -6,6 +6,7 @@ public class PropertyConstants {
 	public static final String SLING_SERVLET_PATHS = "sling.servlet.paths";
 	
 	public static final String E_PASS_SERVLET_URL = "/bin/aem/raj/coid/epass";
+	public static final String E_PASS_WORKFLOW_SERVLET_URL = "/bin/aem/raj/coid/run/workflow";
 	public static final String CREATE_USER_SERVLET_URL = "/bin/aem/raj/coid/users";
 	
 	public static final String AUTHOR_PAYLOAD_PAGE_PATH = "/content/raj/covidinfo/hi/e-pass-form";
