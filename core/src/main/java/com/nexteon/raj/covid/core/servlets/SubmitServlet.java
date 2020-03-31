@@ -88,10 +88,10 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 	private boolean callAEMWorkflow(long epassid) {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("vishal","bhatia@123&"));
+		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("admin","admin"));
 		HttpClientContext localContext = HttpClientContext.create();
 		localContext.setCredentialsProvider(credentialsProvider);
-		HttpPost httppost = new HttpPost("http://103.203.139.233/bin/aem/raj/coid/run/workflow?id="+epassid);
+		HttpPost httppost = new HttpPost("http://localhost:4502/bin/aem/raj/coid/run/workflow?id="+epassid);
 		try {
 			CloseableHttpResponse response = httpclient.execute(httppost, localContext);
 			if(response.getStatusLine().getStatusCode() == 200) {

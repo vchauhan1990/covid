@@ -3,6 +3,7 @@ package com.nexteon.raj.covid.core.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
@@ -21,8 +22,9 @@ public class EPassServiceImpl implements EPassService {
 
 	@Override
 	public boolean saveEPassData(EPass epass, String table) {
+		Connection connection = null;
 		try{
-			Connection connection = getConnection();
+			connection = getConnection();
 			String saveQuery = "insert into " + table + " values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 			PreparedStatement pstmt = connection.prepareStatement(saveQuery);
 			ResourceUtility.setValuesInPS(pstmt,epass);
@@ -30,10 +32,15 @@ public class EPassServiceImpl implements EPassService {
 			if(updated > 0) {
 				return true;
 			}
-			connection.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
+		} finally {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 		return false;
 	}
@@ -42,8 +49,9 @@ public class EPassServiceImpl implements EPassService {
 
 	@Override
 	public EPass getEPassData(long id, String table) {
+		Connection connection = null;
 		try{
-			Connection connection = getConnection();
+			connection = getConnection();
 			String saveQuery = "select * from " + table + " where id=?";
 			PreparedStatement pstmt = connection.prepareStatement(saveQuery);
 			pstmt.setLong(1, id);
@@ -57,6 +65,12 @@ public class EPassServiceImpl implements EPassService {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
+		} finally {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
 	}
