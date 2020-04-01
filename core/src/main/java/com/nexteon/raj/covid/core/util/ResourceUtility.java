@@ -39,10 +39,10 @@ public class ResourceUtility {
 		epass.setBlock(request.getParameter("block")!=null?request.getParameter("block"):"");
 		epass.setCity(request.getParameter("city")!=null?request.getParameter("city"):"");
 		epass.setPincode(request.getParameter("pincode")!=null?request.getParameter("pincode"):"");
-		epass.setSelectId(request.getParameter("selectid"));
+		epass.setSelectId(request.getParameter("selectId"));
 		epass.setVehicleNumber(request.getParameter("vehicleNumber"));
 		epass.setVehicletype(request.getParameter("vehicletype"));
-		SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		try {
 			Date date = format.parse(request.getParameter("fromDate"));
 			GregorianCalendar fromDate =new GregorianCalendar();

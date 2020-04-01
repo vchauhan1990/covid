@@ -1,5 +1,11 @@
 package com.nexteon.raj.covid.core.workflows;
 
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.apache.jackrabbit.api.security.user.Authorizable;
+import org.apache.jackrabbit.api.security.user.UserManager;
+import org.apache.sling.jcr.base.util.AccessControlUtil;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -29,9 +35,21 @@ public class DistrictParticipantStep implements ParticipantStepChooser {
 		String id = workItem.getContentPath().substring(workItem.getContentPath().indexOf(".") + 1,
 				workItem.getContentPath().lastIndexOf("."));
 		String groupOrUser = "admin";
-		EPass epass = ePassService.getEPassData(Long.valueOf(id),"epass");
+		EPass epass = ePassService.getEPassData(Long.valueOf(id), "epass");
+		LOGGER.info("Exception in DistrictParticipantStep - epass: {}",epass);
 		if (null != epass) {
 			groupOrUser = "covid-group-" + epass.getDistrict() + "-" + epass.getDepartment();
+			LOGGER.info("User Group - epass: {}",groupOrUser);
+			try {
+				UserManager userManager = AccessControlUtil.getUserManager(workflowSession.adaptTo(Session.class));
+				Authorizable group = userManager.getAuthorizable(groupOrUser);
+				if (group != null) {
+					return group.getID();
+				}
+			} catch (RepositoryException e) {
+				LOGGER.info("Exception in DistrictParticipantStep: {}",e.getMessage());
+				e.printStackTrace();
+			}
 			workItem.getMetaDataMap().put("epass", epass);
 		}
 		return groupOrUser;

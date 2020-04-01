@@ -60,7 +60,7 @@ public class EPassServiceImpl implements EPassService {
 			connection = getConnection();
 			String saveQuery = "select * from " + table + " where id=?";
 			PreparedStatement pstmt = connection.prepareStatement(saveQuery);
-			pstmt.setLong(1, id);
+			pstmt.setString(1, String.valueOf(id));
 			ResultSet rs = pstmt.executeQuery();
 			rs.next();
 			EPass epass = ResourceUtility.setEPassFromResultSet(rs);

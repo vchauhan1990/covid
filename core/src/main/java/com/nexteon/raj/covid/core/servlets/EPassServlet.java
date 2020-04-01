@@ -74,9 +74,13 @@ public class EPassServlet extends SlingAllMethodsServlet {
 	private boolean startWorkflowProcess(Session session, String workflowName, String workflowContent) {
 		try {
 			LOGGER.error("Value of wfsession: {} -- {}", workflowService, session);
+			LOGGER.error("Workflow Name & Content: {} -- {}", workflowName, workflowContent);
 			WorkflowSession wfSession = workflowService.getWorkflowSession(session);
+			LOGGER.error("Workflow Session: {} -- {}", wfSession);
 			WorkflowModel wfModel = wfSession.getModel(workflowName);
+			LOGGER.error("Workflow Model: {} -- {}", wfModel);
 			WorkflowData wfData = wfSession.newWorkflowData(PropertyConstants.NODE_PROP_JCR_PATH, workflowContent);
+			LOGGER.error("Workflow Data: {} -- {}", wfData);
 			wfSession.startWorkflow(wfModel, wfData);
 			return true;
 		} catch (Exception e) {

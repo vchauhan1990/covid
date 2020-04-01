@@ -75,17 +75,18 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 				response.sendRedirect(PropertyConstants.AUTHOR_ERROR_PAGE_PATH);
 			} else {
 				if (resolver != null) resolver.close();
-				response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH);
+				new Thread(()->{
+					boolean workflowCalled = callAEMWorkflow(epass.getId());
+					if(workflowCalled) {
+						LOGGER.info("Success in wf Calling");				
+					} else {
+						LOGGER.info("Error in wf Calling");
+					}
+				}).start();
+				response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH+"?regno="+epass.getId());
 			}
 		}
-		new Thread(()->{
-			boolean workflowCalled = callAEMWorkflow(epass.getId());
-			if(workflowCalled) {
-				LOGGER.info("Success in wf Calling");				
-			} else {
-				LOGGER.info("Error in wf Calling");
-			}
-		}).start();
+		
 		
 	}
 	
@@ -96,9 +97,10 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("vishal","bhatia@123&"));
 		HttpClientContext localContext = HttpClientContext.create();
 		localContext.setCredentialsProvider(credentialsProvider);
-		HttpPost httppost = new HttpPost("http://103.203.139.233/bin/aem/raj/coid/run/workflow?id="+epassid);
+		HttpPost httppost = new HttpPost("http://10.70.241.11/bin/aem/raj/coid/run/workflow?id="+epassid);
 		try {
 			CloseableHttpResponse response = httpclient.execute(httppost, localContext);
+			LOGGER.info("Workflow Response: {}",response.toString());
 			if(response.getStatusLine().getStatusCode() == 200) {
 				LOGGER.info("Success in Calling AEM WF");
 				return true;
@@ -115,8 +117,12 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 			LOGGER.info("Inside File Upload");
 			AssetManager assetManager = resolver.adaptTo(AssetManager.class);
 			RequestParameter param = request.getRequestParameter("upload");
+			String fileType="image/jpeg";
+			if(request.getParameter("upload").contains("png")) {
+				fileType = "image/png";
+			}
 			Asset newAsset = assetManager.createAsset(
-					PropertyConstants.DAM_UPLOAD_BASE_PATH + epass.getId() + "-" + param.getFileName(),
+					PropertyConstants.DAM_UPLOAD_BASE_PATH + epass.getId() + "-" + epass.getSelectId() + "." + fileType,
 					param.getInputStream(), param.getContentType(), true);
 			epass.setIdPath(newAsset.getPath());
 			session.save();
