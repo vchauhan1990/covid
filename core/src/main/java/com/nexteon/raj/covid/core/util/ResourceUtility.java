@@ -42,7 +42,7 @@ public class ResourceUtility {
 		epass.setSelectId(request.getParameter("selectid"));
 		epass.setVehicleNumber(request.getParameter("vehicleNumber"));
 		epass.setVehicletype(request.getParameter("vehicletype"));
-		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+		SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
 		try {
 			Date date = format.parse(request.getParameter("fromDate"));
 			GregorianCalendar fromDate =new GregorianCalendar();

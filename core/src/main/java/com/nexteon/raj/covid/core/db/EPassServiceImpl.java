@@ -9,6 +9,8 @@ import javax.sql.DataSource;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.day.commons.datasource.poolservice.DataSourcePool;
 import com.nexteon.raj.covid.core.entity.EPass;
@@ -20,8 +22,11 @@ public class EPassServiceImpl implements EPassService {
 	@Reference
 	private DataSourcePool source;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(EPassServiceImpl.class);
+	
 	@Override
 	public boolean saveEPassData(EPass epass, String table) {
+		LOGGER.info("Inside DB SAVE");
 		Connection connection = null;
 		try{
 			connection = getConnection();
@@ -30,6 +35,7 @@ public class EPassServiceImpl implements EPassService {
 			ResourceUtility.setValuesInPS(pstmt,epass);
 			int updated = pstmt.executeUpdate();
 			if(updated > 0) {
+				LOGGER.info("DB SAVED");
 				return true;
 			}
 		} catch (Exception e) {
@@ -76,10 +82,12 @@ public class EPassServiceImpl implements EPassService {
 	}
 
 	private Connection getConnection() {
+		LOGGER.info("Inside DB Connection");
 		DataSource dataSource = null;
 		Connection con = null;
 		try {
 			dataSource = (DataSource) source.getDataSource("COVID");
+			LOGGER.info("Inside DB Connection: "+dataSource.getConnection());
 			con = dataSource.getConnection();
 			return con;
 		} catch (Exception e) {

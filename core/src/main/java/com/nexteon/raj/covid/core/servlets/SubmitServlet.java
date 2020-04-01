@@ -75,36 +75,44 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 				response.sendRedirect(PropertyConstants.AUTHOR_ERROR_PAGE_PATH);
 			} else {
 				if (resolver != null) resolver.close();
-				boolean workflowCalled = callAEMWorkflow(epass.getId());
-				if(workflowCalled) {
-					response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH);
-				} else {
-					response.sendRedirect(PropertyConstants.AUTHOR_ERROR_PAGE_PATH);
-				}
+				response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH);
 			}
 		}
+		new Thread(()->{
+			boolean workflowCalled = callAEMWorkflow(epass.getId());
+			if(workflowCalled) {
+				LOGGER.info("Success in wf Calling");				
+			} else {
+				LOGGER.info("Error in wf Calling");
+			}
+		}).start();
+		
 	}
 	
 	private boolean callAEMWorkflow(long epassid) {
+		LOGGER.info("Calling AEM WF");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("admin","admin"));
+		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("vishal","bhatia@123&"));
 		HttpClientContext localContext = HttpClientContext.create();
 		localContext.setCredentialsProvider(credentialsProvider);
-		HttpPost httppost = new HttpPost("http://localhost:4502/bin/aem/raj/coid/run/workflow?id="+epassid);
+		HttpPost httppost = new HttpPost("http://103.203.139.233/bin/aem/raj/coid/run/workflow?id="+epassid);
 		try {
 			CloseableHttpResponse response = httpclient.execute(httppost, localContext);
 			if(response.getStatusLine().getStatusCode() == 200) {
+				LOGGER.info("Success in Calling AEM WF");
 				return true;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		LOGGER.info("Error in Calling AEM WF");
 		return false;	
 	}
 
 	private boolean uploadFileOnAEM(SlingHttpServletRequest request, EPass epass) {
 		try {
+			LOGGER.info("Inside File Upload");
 			AssetManager assetManager = resolver.adaptTo(AssetManager.class);
 			RequestParameter param = request.getRequestParameter("upload");
 			Asset newAsset = assetManager.createAsset(
@@ -112,6 +120,7 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 					param.getInputStream(), param.getContentType(), true);
 			epass.setIdPath(newAsset.getPath());
 			session.save();
+			LOGGER.info("File Uploaded");
 			return true;
 		} catch (Exception e) {
 			return false;
