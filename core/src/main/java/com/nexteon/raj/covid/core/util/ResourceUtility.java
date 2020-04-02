@@ -1,12 +1,12 @@
 package com.nexteon.raj.covid.core.util;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.Calendar;
 
 import javax.jcr.Node;
 import javax.servlet.ServletException;
@@ -44,14 +44,12 @@ public class ResourceUtility {
 		epass.setVehicletype(request.getParameter("vehicletype"));
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		try {
-			Date date = format.parse(request.getParameter("fromDate"));
-			GregorianCalendar fromDate =new GregorianCalendar();
-			fromDate.setTime(date);
-			epass.setFromDate(fromDate);
-			Date date2 = format.parse(request.getParameter("toDate"));
-			GregorianCalendar toDate =new GregorianCalendar();
-			toDate.setTime(date2);
-			epass.setToDate(toDate);
+			Calendar c= Calendar.getInstance();
+			c.setTime(format.parse(request.getParameter("fromDate")));
+			epass.setFromDate(new Date(c.getTimeInMillis()));
+			Calendar c1= Calendar.getInstance();
+			c1.setTime(format.parse(request.getParameter("toDate")));
+			epass.setToDate(new Date(c1.getTimeInMillis()));			
 		} catch (Exception e) {
 			LOGGER.info("Exception occurred while parsing the date in mapping method: {}", e.getMessage());
 			return null;
@@ -78,8 +76,8 @@ public class ResourceUtility {
 		pstmt.setString(10, epass.getCity());
 		pstmt.setString(11, epass.getPincode());
 		pstmt.setString(12, epass.getPurpose());
-		pstmt.setDate(13, new java.sql.Date(epass.getFromDate().getTimeInMillis()));
-		pstmt.setDate(14, new java.sql.Date(epass.getToDate().getTimeInMillis()));
+		pstmt.setDate(13, epass.getFromDate());
+		pstmt.setDate(14, epass.getToDate());
 		pstmt.setString(15, epass.getDistrict());
 		pstmt.setString(16, epass.getVehicleNumber());
 		pstmt.setString(17, epass.getVehicletype());
@@ -89,32 +87,6 @@ public class ResourceUtility {
 		pstmt.setString(21, epass.getDepartment());
 		pstmt.setString(22, epass.getSelectId());
 		pstmt.setString(23, epass.getIdPath());
-	}
-	
-	private Node createEPassNode(Node baseNode, EPass epass) throws Exception {
-		Node node = baseNode.addNode(String.valueOf(epass.getId()), PropertyConstants.NODE_PROP_NT_UNSTRUCTURED);
-		node.setProperty("id", epass.getId());
-		node.setProperty("name", epass.getName());
-		node.setProperty("fathername", epass.getFathername());
-		node.setProperty("phone", epass.getPhone());
-		node.setProperty("email", epass.getEmail());
-		node.setProperty("district", epass.getDistrict());
-		node.setProperty("addtype", epass.getAddtype());
-		node.setProperty("address", epass.getAddress());
-		node.setProperty("graampanchayat", epass.getGraampanchayat());
-		node.setProperty("block", epass.getBlock());
-		node.setProperty("city", epass.getCity());
-		node.setProperty("pincode", epass.getPincode());
-		node.setProperty("selectid", epass.getSelectId());
-		node.setProperty("idPath", epass.getIdPath());
-		node.setProperty("vehicleNumber", epass.getVehicleNumber());
-		node.setProperty("vehicletype", epass.getVehicletype());
-		node.setProperty("fromDate", epass.getFromDate());
-		node.setProperty("toDate", epass.getToDate());
-		node.setProperty("destinationtype", epass.getDestinationtype());
-		node.setProperty("purpose", epass.getPurpose());
-		node.setProperty("department", epass.getDepartment());
-		return node;
 	}
 	
 	public static EPass setEPassFromResultSet(ResultSet rs) throws IOException, ServletException, NumberFormatException, SQLException{
@@ -131,16 +103,12 @@ public class ResourceUtility {
 		epass.setBlock(rs.getString("block")!=null?rs.getString("block"):"");
 		epass.setCity(rs.getString("city")!=null?rs.getString("city"):"");
 		epass.setPincode(rs.getString("pincode")!=null?rs.getString("pincode"):"");
-		epass.setSelectId(rs.getString("selectid"));
+		epass.setSelectId(rs.getString("selectId"));
 		epass.setVehicleNumber(rs.getString("vehicleNumber"));
 		epass.setVehicletype(rs.getString("vehicletype"));
 		try {
-			GregorianCalendar fromDate =new GregorianCalendar();
-			fromDate.setTime(rs.getDate("fromDate"));
-			epass.setFromDate(fromDate);
-			GregorianCalendar toDate =new GregorianCalendar();
-			toDate.setTime(rs.getDate("toDate"));
-			epass.setToDate(toDate);
+			epass.setFromDate(rs.getDate("fromDate"));
+			epass.setToDate(rs.getDate("toDate"));
 		} catch (Exception e) {
 			LOGGER.info("Exception occurred while parsing the date in mapping method: {}", e.getMessage());
 			return null;
@@ -150,6 +118,7 @@ public class ResourceUtility {
 		epass.setDepartment(rs.getString("department"));
 		epass.setFromJourney(rs.getString("fromJourney"));
 		epass.setToJourney(rs.getString("toJourney"));
+		epass.setIdPath(rs.getString("idPath"));
 		return epass;
 	}
 }

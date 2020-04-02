@@ -1,6 +1,6 @@
 package com.nexteon.raj.covid.core.entity;
 
-import java.util.GregorianCalendar;
+import java.sql.Date;
 
 public class EPass {
 
@@ -16,8 +16,8 @@ public class EPass {
 	private String city;
 	private String pincode;
 	private String purpose;
-	private GregorianCalendar fromDate;
-	private GregorianCalendar toDate;
+	private Date fromDate;
+	private Date toDate;
 	private String district;
 	private String vehicleNumber;
 	private String vehicletype;
@@ -64,18 +64,6 @@ public class EPass {
 	}
 	public void setPurpose(String purpose) {
 		this.purpose = purpose;
-	}
-	public GregorianCalendar getFromDate() {
-		return fromDate;
-	}
-	public void setFromDate(GregorianCalendar fromDate) {
-		this.fromDate = fromDate;
-	}
-	public GregorianCalendar getToDate() {
-		return toDate;
-	}
-	public void setToDate(GregorianCalendar toDate) {
-		this.toDate = toDate;
 	}
 	public String getDistrict() {
 		return district;
@@ -167,5 +155,28 @@ public class EPass {
 	public void setBlock(String block) {
 		this.block = block;
 	}
+	public Date getFromDate() {
+		return fromDate;
+	}
+	public void setFromDate(Date fromDate) {
+		this.fromDate = fromDate;
+	}
+	public Date getToDate() {
+		return toDate;
+	}
+	public void setToDate(Date toDate) {
+		this.toDate = toDate;
+	}
+	@Override
+	public String toString() {
+		return "EPass [id=" + id + ", name=" + name + ", fathername=" + fathername + ", phone=" + phone + ", email="
+				+ email + ", addtype=" + addtype + ", address=" + address + ", graampanchayat=" + graampanchayat
+				+ ", block=" + block + ", city=" + city + ", pincode=" + pincode + ", purpose=" + purpose
+				+ ", fromDate=" + fromDate + ", toDate=" + toDate + ", district=" + district + ", vehicleNumber="
+				+ vehicleNumber + ", vehicletype=" + vehicletype + ", fromJourney=" + fromJourney + ", toJourney="
+				+ toJourney + ", destinationtype=" + destinationtype + ", department=" + department + ", selectId="
+				+ selectId + ", idPath=" + idPath + "]";
+	}
+	
 	
 }

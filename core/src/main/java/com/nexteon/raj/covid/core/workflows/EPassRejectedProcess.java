@@ -1,19 +1,41 @@
 package com.nexteon.raj.covid.core.workflows;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.day.cq.workflow.WorkflowException;
-import com.day.cq.workflow.WorkflowSession;
-import com.day.cq.workflow.exec.WorkItem;
-import com.day.cq.workflow.exec.WorkflowProcess;
-import com.day.cq.workflow.metadata.MetaDataMap;
+import com.adobe.granite.workflow.WorkflowException;
+import com.adobe.granite.workflow.WorkflowSession;
+import com.adobe.granite.workflow.exec.WorkItem;
+import com.adobe.granite.workflow.exec.WorkflowProcess;
+import com.adobe.granite.workflow.metadata.MetaDataMap;
+import com.nexteon.raj.covid.core.db.EPassService;
+import com.nexteon.raj.covid.core.entity.EPass;
 
-@Component(service=WorkflowProcess.class, property = {"process.label=COVID E-Pass Reject"})
+			
+@Component(service = WorkflowProcess.class, property = { "process.label=COVID E-Pass Reject" })
 public class EPassRejectedProcess implements WorkflowProcess {
 
+	@Reference
+	private EPassService ePassService;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(DistrictParticipantStep.class);
+	
 	@Override
 	public void execute(WorkItem item, WorkflowSession session, MetaDataMap metaDataMap) throws WorkflowException {
-		
+		MetaDataMap map = item.getMetaDataMap();
+		EPass epass = map.get("epass", EPass.class);
+		if (epass == null) {
+			String id = item.getContentPath().substring(item.getContentPath().indexOf(".") + 1,
+					item.getContentPath().lastIndexOf("."));
+			epass = ePassService.getEPassData(Long.valueOf(id), "epass");
+			if (ePassService.saveEPassData(epass, "epassrejected")) {
+				LOGGER.info("Application Rejected:  " + Long.valueOf(epass.getId()));
+			} else {
+				LOGGER.info("Some Error while Rejection:  " + Long.valueOf(epass.getId()));
+			}
+		}
 	}
 
 }

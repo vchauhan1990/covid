@@ -2,7 +2,6 @@ package com.nexteon.raj.covid.core.servlets;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
