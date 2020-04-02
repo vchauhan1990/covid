@@ -1,6 +1,8 @@
 package com.nexteon.raj.covid.core.servlets;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +21,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -30,8 +31,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.day.cq.dam.api.Asset;
-import com.day.cq.dam.api.AssetManager;
 import com.nexteon.raj.covid.core.constants.PropertyConstants;
 import com.nexteon.raj.covid.core.db.EPassService;
 import com.nexteon.raj.covid.core.entity.EPass;
@@ -45,15 +44,16 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 	private static final long serialVersionUID = -326458997541933415L;
 
 	@Reference
-    private EPassService ePassService;
-	
+	private EPassService ePassService;
+
 	@Reference
 	private ResourceResolverFactory resolverFactory;
 
 	private ResourceResolver resolver = null;
 	private Session session = null;
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(SubmitServlet.class);
+
 	@Override
 	protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)
 			throws ServletException, IOException {
@@ -63,45 +63,45 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 		try {
 			resolver = resolverFactory.getServiceResourceResolver(param);
 			session = resolver.adaptTo(Session.class);
-		}catch(Exception e) {
+		} catch (Exception e) {
 			LOGGER.error("Exception occurred while fetching the data: {}", e.getMessage());
 		}
 		EPass epass = ResourceUtility.mapRequestToEpass(request);
 		if (null == epass || !uploadFileOnAEM(request, epass)) {
 			response.sendRedirect(PropertyConstants.AUTHOR_ERROR_PAGE_PATH);
 		} else {
-			boolean status = ePassService.saveEPassData(epass,"epass");
-			if(!status) {
+			boolean status = ePassService.saveEPassData(epass, "epass");
+			if (!status) {
 				response.sendRedirect(PropertyConstants.AUTHOR_ERROR_PAGE_PATH);
 			} else {
-				if (resolver != null) resolver.close();
-				new Thread(()->{
+				if (resolver != null)
+					resolver.close();
+				new Thread(() -> {
 					boolean workflowCalled = callAEMWorkflow(epass.getId());
-					if(workflowCalled) {
-						LOGGER.info("Success in wf Calling");				
+					if (workflowCalled) {
+						LOGGER.info("Success in wf Calling");
 					} else {
 						LOGGER.info("Error in wf Calling");
 					}
 				}).start();
-				response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH+"?regno="+epass.getId());
+				response.sendRedirect(PropertyConstants.AUTHOR_SUCCESS_PAGE_PATH + "?regno=" + epass.getId());
 			}
 		}
-		
-		
+
 	}
-	
+
 	private boolean callAEMWorkflow(long epassid) {
 		LOGGER.info("Calling AEM WF");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("vishal","bhatia@123&"));
+		credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("vishal", "bhatia@123&"));
 		HttpClientContext localContext = HttpClientContext.create();
 		localContext.setCredentialsProvider(credentialsProvider);
-		HttpPost httppost = new HttpPost("http://10.70.241.11/bin/aem/raj/coid/run/workflow?id="+epassid);
+		HttpPost httppost = new HttpPost("http://10.70.241.11/bin/aem/raj/coid/run/workflow?id=" + epassid);
 		try {
 			CloseableHttpResponse response = httpclient.execute(httppost, localContext);
-			LOGGER.info("Workflow Response: {}",response.toString());
-			if(response.getStatusLine().getStatusCode() == 200) {
+			LOGGER.info("Workflow Response: {}", response.toString());
+			if (response.getStatusLine().getStatusCode() == 200) {
 				LOGGER.info("Success in Calling AEM WF");
 				return true;
 			}
@@ -109,27 +109,49 @@ public class SubmitServlet extends SlingAllMethodsServlet {
 			e.printStackTrace();
 		}
 		LOGGER.info("Error in Calling AEM WF");
-		return false;	
+		return false;
 	}
 
 	private boolean uploadFileOnAEM(SlingHttpServletRequest request, EPass epass) {
 		try {
-			LOGGER.info("Inside File Upload");
-			AssetManager assetManager = resolver.adaptTo(AssetManager.class);
-			RequestParameter param = request.getRequestParameter("upload");
-			String fileType="image/jpeg";
-			if(request.getParameter("upload").contains("png")) {
-				fileType = "image/png";
+			final boolean isMultipart = org.apache.commons.fileupload.servlet.ServletFileUpload
+					.isMultipartContent(request);
+			if (isMultipart) {
+				final java.util.Map<String, org.apache.sling.api.request.RequestParameter[]> params = request
+						.getRequestParameterMap();
+				for (final java.util.Map.Entry<String, org.apache.sling.api.request.RequestParameter[]> pairs : params
+						.entrySet()) {
+					final String k = pairs.getKey();
+					if (k.equals("upload")) {
+						final org.apache.sling.api.request.RequestParameter[] pArr = pairs.getValue();
+						final org.apache.sling.api.request.RequestParameter param = pArr[0];
+						final InputStream stream = param.getInputStream();
+						if (!writeToDam(stream, epass.getId() + "-" + param.getFileName(), param.getContentType(), epass)
+								.equals("")) {
+							return true;
+						} else {
+							return false;
+						}
+					}
+				}
 			}
-			Asset newAsset = assetManager.createAsset(
-					PropertyConstants.DAM_UPLOAD_BASE_PATH + epass.getId() + "-" + epass.getSelectId() + "." + fileType,
-					param.getInputStream(), param.getContentType(), true);
-			epass.setIdPath(newAsset.getPath());
-			session.save();
-			LOGGER.info("File Uploaded");
-			return true;
 		} catch (Exception e) {
-			return false;
+			e.printStackTrace();
 		}
+		return false;
+	}
+
+	private String writeToDam(InputStream is, String fileName, String fileType, EPass epass) {
+		try {
+			com.day.cq.dam.api.AssetManager assetMgr = resolver.adaptTo(com.day.cq.dam.api.AssetManager.class);
+			String newFile = PropertyConstants.DAM_UPLOAD_BASE_PATH + fileName;
+			assetMgr.createAsset(newFile, is, fileType, true);
+			session.save();
+			epass.setIdPath(newFile);
+			return newFile;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
